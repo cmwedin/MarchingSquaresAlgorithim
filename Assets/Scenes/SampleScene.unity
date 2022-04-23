@@ -218,8 +218,9 @@ GameObject:
   - component: {fileID: 854234801}
   - component: {fileID: 854234800}
   - component: {fileID: 854234799}
+  - component: {fileID: 854234803}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: MarchingSquares
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -237,8 +238,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3957615786bed71499d84dbe80b55fc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  threshold: 0
-  resolution: 0
+  threshold: 1
+  resolution: 0.1
+  xLowerBound: -2
+  xUpperBound: 2
+  yLowerBound: -2
+  yUpperBound: 2
 --- !u!23 &854234800
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -302,3 +307,15 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &854234803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854234798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f021a05f7af9c1e49a49ec332937978e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
