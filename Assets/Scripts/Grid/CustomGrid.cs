@@ -25,6 +25,7 @@ public class CustomGrid<TGridObject>
     }
 
     private void InitializeGridCells(){
+        Debug.Log("Initializing grid cells");
         Vector2Int index;          
         for (int y = 0; y < width; y++) {
             for (int x = 0; x < width; x++) {
@@ -32,22 +33,27 @@ public class CustomGrid<TGridObject>
                 gridArray[x,y] = new GridCell<TGridObject>(index);
                 gridArray[x,y].SetValue(default(TGridObject));
             }
-        }        
+        }
+        Debug.Log("Finished initializing cells");
     }
     private void InitializeNeighbors() {
+        Debug.Log("Initializing cell neighbors");
         Vector2Int index;          
         for (int y = 0; y < width; y++) {
             bool finalRow = y+1 >= height;
+            //if(finalRow) Debug.Log("final row reached");
             for (int x = 0; x < width; x++) {
                 bool finalColumn = x+1 >= width;
+                //if(finalColumn) Debug.Log($"row {y}'s final column reached");
                 index = new Vector2Int(x,y);
                 //? could probably optimize this
                 if(!finalRow) gridArray[x,y].SetNeighbor(GridDirection.U, gridArray[x,y+1]);
-                if(!finalRow && !finalColumn) gridArray[x,y].SetNeighbor(GridDirection.UL, gridArray[x+1,y+1]);
-                if(!finalColumn) gridArray[x,y].SetNeighbor(GridDirection.L, gridArray[x+1,y]);
+                if(!finalRow && !finalColumn) gridArray[x,y].SetNeighbor(GridDirection.UR, gridArray[x+1,y+1]);
+                if(!finalColumn) gridArray[x,y].SetNeighbor(GridDirection.R, gridArray[x+1,y]);
                 //? SetNeighbor automatically sets the inverse neighbor as well so you only need to set the forward ones in the loop
             }
         }
+        Debug.Log("Finished initializing neighbors");
     }
 
     //TODO Void InterateOverIndex(Action<vector2Int>(Vector2Int index)) {for each index do Action}

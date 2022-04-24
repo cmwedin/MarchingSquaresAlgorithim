@@ -67,7 +67,7 @@ public class MarchingSquares : MonoBehaviour
         Mesh.TriangulateFromPotential(testingGrid);
         running = false;
         watch.Stop();
-        Debug.Log($"algorithm run in {watch.ElapsedMilliseconds}ms");
+        Debug.Log($"marching squares algorithm run in {watch.ElapsedMilliseconds}ms");
         return;
     }
 

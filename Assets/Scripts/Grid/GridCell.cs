@@ -27,8 +27,9 @@ public class GridCell<TGridObject>
 
     public void SetNeighbor(GridDirection direction, GridCell<TGridObject> cell)
     {
+        //Debug.Log($"Setting {direction} neighbor of cell at {Index}");
         neighbors[(int)direction] = cell;
-        cell.neighbors[(int)direction.Opposite()] = this;
+        if(cell.GetNeighbor(direction.Opposite()) != this) cell.SetNeighbor(direction.Opposite(), this);
     }
     //? returns a list of directions with which a condition is satisfied 
     public List<GridDirection> CheckNeighbors(Func<GridCell<TGridObject>,GridCell<TGridObject>,bool> Condition){
@@ -56,10 +57,12 @@ public class GridCell<TGridObject>
     
     //? returns a list of the non-null neighbors of the cell in the U UR and R directions
     public List<GridCell<TGridObject>> GetForwardNeighbors(){
+        Debug.Log($"getting forward neighbors of cell at {Index}");
         GridDirection direction = GridDirection.U;
         var output = new List<GridCell<TGridObject>>();
         while (direction < GridDirection.DR) {
-            if (neighbors[(int)direction] != null) output.Add(neighbors[(int)direction]);
+            if (neighbors[(int)direction] != null) { output.Add(neighbors[(int)direction]);
+                Debug.Log($"{direction} neighbor found");}
             direction = direction.Next();
         }
         return(output);
