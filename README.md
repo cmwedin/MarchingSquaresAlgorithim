@@ -1,2 +1,2 @@
 # MarchingSquaresAlgorithim
- A heavily WIP marching squares algorithim I've been developing
+ A heavily WIP marching squares algorithim I've been developing, featuring and overdesigned custom grid class i plan to use as a bass for my next project
