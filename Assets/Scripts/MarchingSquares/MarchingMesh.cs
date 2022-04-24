@@ -11,9 +11,12 @@ public class MarchingMesh : MonoBehaviour
     static List<Color> colors = new List<Color>();
 
     //* Public Methods
-    public void Triangulate(CustomGrid<bool>potentialTests) {
+    public void TriangulateFromPotential(CustomGrid<bool> potentialTests) {
         Clear();
         var cellList = potentialTests.GetCellList();
+        
+    }
+    private void TriangulateCell(GridCell<bool> cell) {
         
     }
 

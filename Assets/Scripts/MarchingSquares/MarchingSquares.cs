@@ -64,7 +64,7 @@ public class MarchingSquares : MonoBehaviour
                 testingGrid.SetGridValue(index, testingValue >= threshold);
             }
         }
-        Mesh.Triangulate(testingGrid);
+        Mesh.TriangulateFromPotential(testingGrid);
         running = false;
         watch.Stop();
         Debug.Log($"algorithm run in {watch.ElapsedMilliseconds}ms");
