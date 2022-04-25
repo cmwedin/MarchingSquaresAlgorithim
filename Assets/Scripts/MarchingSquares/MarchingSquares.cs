@@ -29,6 +29,24 @@ public class MarchingSquares : MonoBehaviour
     public void SetPotential(Func<Vector2,float> _potential) {
         Potential = _potential;
     }
+    public float GetPotentialAt(Vector2 pos) {
+        if(Potential == null) {throw new Exception("trying to sample an unset potential");}
+        return Potential(pos);
+    }
+    public float GetPotentialAt(GridCell<bool> cell) {
+        if(Potential == null) {throw new Exception("trying to sample an unset potential");}
+        return Potential(cell.GetWorldPos());
+    }
+    public Vector3 LerpCells(GridCell<bool> cell1, GridCell<bool> cell2) {
+        if(cell1.GetValue() == cell2.GetValue()) {
+            Debug.LogWarning("Trying to interpolate between two cells with the same value");
+            return cell1.GetWorldPos();
+        }
+        float value1 = GetPotentialAt(cell1);
+        float value2 = GetPotentialAt(cell2);
+        float t = (threshold - value1) / (value2 - value1);
+        return Vector3.Lerp(cell1.GetWorldPos(),cell2.GetWorldPos(),t);
+    }
     //? public wrapper to ensure the algorithm isn't called multiple times per instance 
     //? probably a more elegant way to do this
     public void Run() {
@@ -86,6 +104,7 @@ public class MarchingSquares : MonoBehaviour
     //* Monobehavior methods
     private void Awake() {
         Mesh = GetComponent<MarchingMesh>();
+        Mesh.MarchingSquares = this;
     }
     //? Start is called before the first frame update
     void Start()
