@@ -45,12 +45,16 @@ public class MarchingSquares : MonoBehaviour
     private void run() {
         var watch = Stopwatch.StartNew(); //? for performance testing
         running = true;
-        //? the testing grid is a grip of bool representing wether each point is >= or < the threshold value (1 and 0 respectively)
+        if(Potential == null) {
+            Debug.LogWarning("Potential never set, using default magnitude potential");
+            SetPotential(x => x.magnitude);
+        }
+        //? the testing grid is a grid of bools representing wether each point is >= or < the threshold value (1 and 0 respectively)
         CustomGrid<bool> testingGrid = new CustomGrid<bool>(
             gridWidth, 
             gridHeight, 
             resolution,
-            new Vector2(xLowerBound, xUpperBound) //? uses the bottom corner of each cell as testing point, perhaps this should be the center?
+            new Vector2(xLowerBound, yLowerBound) 
         );
         List<GridCell<bool>> boundaryPoints = new List<GridCell<bool>>();
         //TODO this could probably be replace by a function in CustomGrid that iterates an action over each index
@@ -88,10 +92,6 @@ public class MarchingSquares : MonoBehaviour
     {
         gridWidth = Mathf.FloorToInt(TotalWidth/resolution);
         gridHeight = Mathf.FloorToInt(TotalHeight/resolution);
-        if(Potential == null) {
-            Debug.LogWarning("Potential never set, using default magnitude potential");
-            SetPotential(x => x.magnitude);
-        }
         run(); //! testing purposes only
     }
 

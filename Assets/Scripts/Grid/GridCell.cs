@@ -5,25 +5,30 @@ using UnityEngine;
 
 public class GridCell<TGridObject>
 {
+    private CustomGrid<TGridObject> parentGrid;
     private GridCell<TGridObject>[] neighbors;
     private TGridObject value;
+    public Vector2Int Index { get; set; }
 
-    public TGridObject GetValue()
-    {
+    // * Constructors
+    public GridCell(Vector2Int index, CustomGrid<TGridObject> parent) {
+        this.Index = index;
+        this.parentGrid = parent;
+        neighbors = new GridCell<TGridObject>[8];
+    }
+    
+    // * Public Methods
+    public TGridObject GetValue() {
         return value;
     }
 
-    public void SetValue(TGridObject value)
-    {
+    public void SetValue(TGridObject value) {
         this.value = value;
     }
 
-    public GridCell(Vector2Int index)
-    {
-        this.Index = index;
-        neighbors = new GridCell<TGridObject>[8];
+    public Vector2 GetWorldPos() {
+        return parentGrid.GetWorldPos(Index);
     }
-    public Vector2Int Index { get; set; }
 
     public void SetNeighbor(GridDirection direction, GridCell<TGridObject> cell)
     {
@@ -57,12 +62,14 @@ public class GridCell<TGridObject>
     
     //? returns a list of the non-null neighbors of the cell in the U UR and R directions
     public List<GridCell<TGridObject>> GetForwardNeighbors(){
-        Debug.Log($"getting forward neighbors of cell at {Index}");
+        //Debug.Log($"getting forward neighbors of cell at {Index}");
         GridDirection direction = GridDirection.U;
         var output = new List<GridCell<TGridObject>>();
         while (direction < GridDirection.DR) {
-            if (neighbors[(int)direction] != null) { output.Add(neighbors[(int)direction]);
-                Debug.Log($"{direction} neighbor found");}
+            if (neighbors[(int)direction] != null) { 
+                output.Add(neighbors[(int)direction]);
+                //Debug.Log($"{direction} neighbor found");
+            }
             direction = direction.Next();
         }
         return(output);

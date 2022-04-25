@@ -6,7 +6,7 @@ using UnityEngine;
 public class CustomGrid<TGridObject>
 {
     //? position of index 0,0
-    private Vector2 anchor = Vector2.zero;
+    private Vector2 anchor;
     private int width;
     private int height;
     private float cellSize;
@@ -30,7 +30,7 @@ public class CustomGrid<TGridObject>
         for (int y = 0; y < width; y++) {
             for (int x = 0; x < width; x++) {
                 index = new Vector2Int(x,y);
-                gridArray[x,y] = new GridCell<TGridObject>(index);
+                gridArray[x,y] = new GridCell<TGridObject>(index, this);
                 gridArray[x,y].SetValue(default(TGridObject));
             }
         }
