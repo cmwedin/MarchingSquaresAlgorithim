@@ -13,10 +13,11 @@ public class CustomGrid<TGridObject>
     private GridCell<TGridObject>[,] gridArray;
 
     //? grid constructor
-    public CustomGrid(int width, int height, float cellSize, Vector2 worldSpaceAnchor) {
+    public CustomGrid(int width, int height, float cellSize, Vector2 anchor) {
         this.width = width;
         this.height = height;
         this.cellSize = cellSize;
+        this.anchor = anchor; 
     
         gridArray = new GridCell<TGridObject>[width,height];          
         InitializeGridCells();
