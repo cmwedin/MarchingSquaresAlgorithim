@@ -98,6 +98,7 @@ public class MarchingMesh : MonoBehaviour
                 break;
             case 13: {//? 1101
                 GridCell<bool> offCell = neighbors[0];
+                //? again the order of onCells is relevant in the following cases
                 GridCell<bool>[] onCells = new GridCell<bool>[3];
                 onCells[0] = neighbors[1];
                 onCells[1] = neighbors[2];
@@ -128,30 +129,30 @@ public class MarchingMesh : MonoBehaviour
             case 3: {//? 0011
                 GridCell<bool>[] insideEdge = new GridCell<bool>[2];
                 GridCell<bool>[] outsideEdge = new GridCell<bool>[2];
-                insideEdge[0] = cell;
-                outsideEdge[0] = neighbors[2];
-                insideEdge[1] = neighbors[0];
-                outsideEdge[1] = neighbors[1];
+                insideEdge[0] = neighbors[0];
+                outsideEdge[0] = neighbors[1];
+                insideEdge[1] = cell;
+                outsideEdge[1] = neighbors[2];
                 TriangulateEdge(insideEdge, outsideEdge);
             }
                 break;
-            case 6: {//? 0110
+            case 6: {//? 0110 
                 GridCell<bool>[] insideEdge = new GridCell<bool>[2];
                 GridCell<bool>[] outsideEdge = new GridCell<bool>[2];
-                insideEdge[0] = neighbors[0];
-                outsideEdge[0] = cell;
-                insideEdge[1] = neighbors[1];
-                outsideEdge[1] = neighbors[2];
+                insideEdge[0] = neighbors[1];
+                outsideEdge[0] = neighbors[2];
+                insideEdge[1] = neighbors[0];
+                outsideEdge[1] = cell;
                 TriangulateEdge(insideEdge, outsideEdge);                
             }
                 break;
             case 12: {//? 1100
                 GridCell<bool>[] insideEdge = new GridCell<bool>[2];
                 GridCell<bool>[] outsideEdge = new GridCell<bool>[2];
-                insideEdge[0] = neighbors[1];
-                outsideEdge[0] = neighbors[0];
-                insideEdge[1] = neighbors[2];
-                outsideEdge[1] = cell;
+                insideEdge[0] = neighbors[2];
+                outsideEdge[0] = cell;
+                insideEdge[1] = neighbors[1];
+                outsideEdge[1] = neighbors[0];
                 TriangulateEdge(insideEdge, outsideEdge);
             }
                 break;
@@ -168,13 +169,29 @@ public class MarchingMesh : MonoBehaviour
 
             //? saddle point
             case 5: {//? 0101
+                GridCell<bool>[] insidePoints = new GridCell<bool>[2];
+                GridCell<bool>[] outsidePoints = new GridCell<bool>[2];
+                insidePoints[0] = cell;
+                outsidePoints[0] = neighbors[0];
+                insidePoints[1] = neighbors[1];
+                outsidePoints[1] = neighbors[2];
+                TriangulateSaddle(insidePoints, outsidePoints,MarchingSquares.TestCellCenter(cell));
             }
                 break;
-            case 10: {//? 1010 
+            case 10: {//? 1010
+                GridCell<bool>[] insidePoints = new GridCell<bool>[2];
+                GridCell<bool>[] outsidePoints = new GridCell<bool>[2];
+                insidePoints[0] = neighbors[0];
+                outsidePoints[0] = cell;
+                insidePoints[1] = neighbors[2];
+                outsidePoints[1] = neighbors[1];
+                TriangulateSaddle(insidePoints, outsidePoints,MarchingSquares.TestCellCenter(cell));             
             }
                 break;
+            default: throw new Exception($"unable to categorize cell at {cell.Index}, case {caseID}");
         }
     }
+
     private void TriangulateSimpleCase(GridCell<bool> cell, List<GridCell<bool>> neighbors) {
         bool inside = cell.GetValue();
         Vector3 v1 = cell.GetWorldPos();
@@ -246,6 +263,27 @@ public class MarchingMesh : MonoBehaviour
         AddTriangleColor(curveColor,exteriorColor,curveColor);
         AddTriangle(off0,off1,interpolation[1]);
         AddTriangleColor(exteriorColor,exteriorColor,curveColor);
+    }
+    private void TriangulateSaddle(GridCell<bool>[] onPoints, GridCell<bool>[] offPoints, bool centerIn) {
+        Vector3 on0 = onPoints[0].GetWorldPos();
+        Vector3 off0 = offPoints[0].GetWorldPos();
+        Vector3 on1 = onPoints[1].GetWorldPos();
+        Vector3 off1 = offPoints[1].GetWorldPos();
+        Vector3[,] interpolation = new Vector3[2,2];
+        for (int i = 0; i < 2; i++) {
+            interpolation[0,i] = MarchingSquares.LerpCells(onPoints[0], offPoints[i]);
+            interpolation[1,i] = MarchingSquares.LerpCells(onPoints[1], offPoints[i]);
+        }
+        AddTriangle(on0, interpolation[0,0], interpolation[0,1]);
+        AddTriangleColor(interiorColor);
+        AddTriangle(interpolation[0,0], off0, interpolation[1,0]);
+        AddTriangleColor(exteriorColor);
+        AddTriangle(interpolation[1,0],on1, interpolation[1,1]);
+        AddTriangleColor(interiorColor);
+        AddTriangle(interpolation[1,1], off1,interpolation[0,1]);
+        AddTriangleColor(exteriorColor);
+        AddQuad(interpolation[0,0],interpolation[1,0],interpolation[1,1],interpolation[0,1]);
+        AddQuadColor(centerIn ? interiorColor : exteriorColor);
     }
 
     private void AddQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4) {

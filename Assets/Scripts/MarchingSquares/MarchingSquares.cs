@@ -37,6 +37,10 @@ public class MarchingSquares : MonoBehaviour
         if(Potential == null) {throw new Exception("trying to sample an unset potential");}
         return Potential(cell.GetWorldPos());
     }
+    public bool TestCellCenter(GridCell<bool> cell) {
+        float centerValue = GetPotentialAt(cell.GetWorldPos() + new Vector2(resolution/2,resolution/2));
+        return centerValue >= threshold;
+    }
     public Vector3 LerpCells(GridCell<bool> cell1, GridCell<bool> cell2) {
         if(cell1.GetValue() == cell2.GetValue()) {
             Debug.LogWarning("Trying to interpolate between two cells with the same value");
@@ -118,4 +122,6 @@ public class MarchingSquares : MonoBehaviour
     void Update() {
         
     }
+
+
 }
