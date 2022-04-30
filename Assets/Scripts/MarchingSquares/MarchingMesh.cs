@@ -2,16 +2,19 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using SadSapphicGames.MeshUtilities;
 public class MarchingMesh : MonoBehaviour
 {
     //* Sibling components
     public MarchingSquares MarchingSquares { get; set; }
     //* Editor Values
     [SerializeField] bool debug;
+    [SerializeField] bool useVertColors;
     [SerializeField] Color interiorColor, exteriorColor, curveColor;
     //* Private Values
     private Mesh mesh;
+    private MeshRenderer meshRenderer;
+    private MeshUtilityWrapper meshWrapper; 
     static List<Vector3> vertices = new List<Vector3>();
     static List<int> triangles = new List<int>();
     static List<Color> colors = new List<Color>();
@@ -24,10 +27,7 @@ public class MarchingMesh : MonoBehaviour
         foreach (var cell in cellList) {
             TriangulateCell(cell);
         }
-        //? draw the new mesh
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangles.ToArray();
-        mesh.colors = colors.ToArray();
+        meshWrapper.UpdateMesh();
     }
     private void TriangulateCell(GridCell<bool> cell) {
         debugLog($"Triangulating cell at {cell.Index}");
@@ -198,7 +198,7 @@ public class MarchingMesh : MonoBehaviour
         Vector3 v2 = neighbors[0].GetWorldPos();
         Vector3 v3 = neighbors[1].GetWorldPos();
         Vector3 v4 = neighbors[2].GetWorldPos();
-        AddQuad(v1,v2,v3,v4);
+        meshWrapper.AddQuad(v1,v2,v3,v4);
         if(inside) AddQuadColor(interiorColor);
         else AddQuadColor(exteriorColor);
     }
@@ -211,17 +211,17 @@ public class MarchingMesh : MonoBehaviour
         for (int i = 0; i < 3; i++) {
             interpolation[i] = MarchingSquares.LerpCells(onCell,offCells[i]);
         }
-        AddTriangle(on,interpolation[0],interpolation[1]);
+        meshWrapper.AddTriangle(on,interpolation[0],interpolation[1]);
         AddTriangleColor(interiorColor, curveColor, curveColor);
-        AddTriangle(on,interpolation[1],interpolation[2]);
+        meshWrapper.AddTriangle(on,interpolation[1],interpolation[2]);
         AddTriangleColor(interiorColor, curveColor, curveColor);
-        AddTriangle(interpolation[0],off0,interpolation[1]);
+        meshWrapper.AddTriangle(interpolation[0],off0,interpolation[1]);
         AddTriangleColor(curveColor,exteriorColor,curveColor);
-        AddTriangle(interpolation[1],off2,interpolation[2]);
+        meshWrapper.AddTriangle(interpolation[1],off2,interpolation[2]);
         AddTriangleColor(curveColor,exteriorColor,curveColor);
-        AddTriangle(interpolation[1],off0,off1);
+        meshWrapper.AddTriangle(interpolation[1],off0,off1);
         AddTriangleColor(curveColor,exteriorColor,exteriorColor);
-        AddTriangle(interpolation[1],off1,off2);
+        meshWrapper.AddTriangle(interpolation[1],off1,off2);
         AddTriangleColor(curveColor,exteriorColor,exteriorColor); 
     }
     private void TriangulateOneOff(GridCell<bool> offCell, GridCell<bool>[] onCells) {
@@ -233,17 +233,17 @@ public class MarchingMesh : MonoBehaviour
         for (int i = 0; i < 3; i++) {
             interpolation[i] = MarchingSquares.LerpCells(offCell,onCells[i]);
         }
-        AddTriangle(off,interpolation[0],interpolation[1]);
+        meshWrapper.AddTriangle(off,interpolation[0],interpolation[1]);
         AddTriangleColor(exteriorColor, curveColor, curveColor);
-        AddTriangle(off,interpolation[1],interpolation[2]);
+        meshWrapper.AddTriangle(off,interpolation[1],interpolation[2]);
         AddTriangleColor(exteriorColor, curveColor, curveColor);
-        AddTriangle(interpolation[0],on0,interpolation[1]);
+        meshWrapper.AddTriangle(interpolation[0],on0,interpolation[1]);
         AddTriangleColor(curveColor,interiorColor,curveColor);
-        AddTriangle(interpolation[1],on2,interpolation[2]);
+        meshWrapper.AddTriangle(interpolation[1],on2,interpolation[2]);
         AddTriangleColor(curveColor,interiorColor,curveColor);
-        AddTriangle(interpolation[1],on0,on1);
+        meshWrapper.AddTriangle(interpolation[1],on0,on1);
         AddTriangleColor(curveColor,interiorColor,interiorColor);
-        AddTriangle(interpolation[1],on1,on2);
+        meshWrapper.AddTriangle(interpolation[1],on1,on2);
         AddTriangleColor(curveColor,interiorColor,interiorColor);               
         }
     private void TriangulateEdge(GridCell<bool>[] insideEdge, GridCell<bool>[] outsideEdge) {
@@ -255,13 +255,13 @@ public class MarchingMesh : MonoBehaviour
         for (int i = 0; i < 2; i++) {
             interpolation[i] = MarchingSquares.LerpCells(outsideEdge[i],insideEdge[i]);    
         }
-        AddTriangle(on0, interpolation[0],on1);
+        meshWrapper.AddTriangle(on0, interpolation[0],on1);
         AddTriangleColor(interiorColor,curveColor, interiorColor);
-        AddTriangle(interpolation[0],interpolation[1],on1);
+        meshWrapper.AddTriangle(interpolation[0],interpolation[1],on1);
         AddTriangleColor(curveColor,curveColor,interiorColor);
-        AddTriangle(interpolation[0],off0,interpolation[1]);
+        meshWrapper.AddTriangle(interpolation[0],off0,interpolation[1]);
         AddTriangleColor(curveColor,exteriorColor,curveColor);
-        AddTriangle(off0,off1,interpolation[1]);
+        meshWrapper.AddTriangle(off0,off1,interpolation[1]);
         AddTriangleColor(exteriorColor,exteriorColor,curveColor);
     }
     private void TriangulateSaddle(GridCell<bool>[] onPoints, GridCell<bool>[] offPoints, bool centerIn) {
@@ -274,34 +274,18 @@ public class MarchingMesh : MonoBehaviour
             interpolation[0,i] = MarchingSquares.LerpCells(onPoints[0], offPoints[i]);
             interpolation[1,i] = MarchingSquares.LerpCells(onPoints[1], offPoints[i]);
         }
-        AddTriangle(on0, interpolation[0,0], interpolation[0,1]);
+        meshWrapper.AddTriangle(on0, interpolation[0,0], interpolation[0,1]);
         AddTriangleColor(interiorColor);
-        AddTriangle(interpolation[0,0], off0, interpolation[1,0]);
+        meshWrapper.AddTriangle(interpolation[0,0], off0, interpolation[1,0]);
         AddTriangleColor(exteriorColor);
-        AddTriangle(interpolation[1,0],on1, interpolation[1,1]);
+        meshWrapper.AddTriangle(interpolation[1,0],on1, interpolation[1,1]);
         AddTriangleColor(interiorColor);
-        AddTriangle(interpolation[1,1], off1,interpolation[0,1]);
+        meshWrapper.AddTriangle(interpolation[1,1], off1,interpolation[0,1]);
         AddTriangleColor(exteriorColor);
-        AddQuad(interpolation[0,0],interpolation[1,0],interpolation[1,1],interpolation[0,1]);
+        meshWrapper.AddQuad(interpolation[0,0],interpolation[1,0],interpolation[1,1],interpolation[0,1]);
         AddQuadColor(centerIn ? interiorColor : exteriorColor);
     }
 
-    private void AddQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4) {
-        int vertIndex = vertices.Count;
-
-        vertices.Add(v1); //@ vertIndex
-        vertices.Add(v2); //@ vertIndex + 1
-        vertices.Add(v3); //@ vertIndex + 2
-        vertices.Add(v4); //@ vertIndex + 3
-
-        triangles.Add(vertIndex);
-        triangles.Add(vertIndex + 1);
-        triangles.Add(vertIndex + 2);
-
-        triangles.Add(vertIndex);
-        triangles.Add(vertIndex + 2);
-        triangles.Add(vertIndex + 3);
-    }
     void AddQuadColor(Color c1) {
         colors.Add(c1);
         colors.Add(c1);
@@ -321,17 +305,6 @@ public class MarchingMesh : MonoBehaviour
         colors.Add(c2);
         colors.Add(c3);
         colors.Add(c4);
-    }
-    private void AddTriangle(Vector3 v1, Vector3 v2, Vector3 v3) {
-        int vertIndex = vertices.Count;
-
-        vertices.Add(v1); //@ vertIndex
-        vertices.Add(v2); //@ vertIndex + 1
-        vertices.Add(v3); //@ vertIndex + 2
-
-        triangles.Add(vertIndex);
-        triangles.Add(vertIndex + 1);
-        triangles.Add(vertIndex + 2);
     }
     void AddTriangleColor(Color color) {
         colors.Add(color);
@@ -364,10 +337,11 @@ public class MarchingMesh : MonoBehaviour
     }
 
     //* MonoBehaviour Methods
-    void Awake()
-    {
+    void Awake() {
         GetComponent<MeshFilter>().mesh = mesh = new Mesh();
+        meshRenderer = GetComponent<MeshRenderer>();
         mesh.name = "Marching Squares Mesh";
+        meshWrapper = new MeshUtilityWrapper(mesh, meshRenderer, useVertColors);
     }
     // Start is called before the first frame update
     void Start()
