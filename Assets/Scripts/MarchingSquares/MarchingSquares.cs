@@ -13,18 +13,26 @@ public class MarchingSquares : MonoBehaviour
     //* editor values
     [SerializeField] private float threshold;
     [SerializeField] private float resolution;
-    [SerializeField] private float xLowerBound, xUpperBound;
-    [SerializeField] private float yLowerBound, yUpperBound;
+    [SerializeField] private float xLowerBound;
+    [SerializeField] private float xUpperBound;
+    [SerializeField] private float yLowerBound;
+    [SerializeField] private float yUpperBound;
     //? probably a more elegant way to do the bounds
 
     //* private values
     private Func<Vector2,float> Potential;
     private bool running = false;
     private int gridWidth, gridHeight;
-    private float TotalHeight {get => xUpperBound - xLowerBound;}
-    private float TotalWidth {get => yUpperBound - yLowerBound;}
 
-    
+
+    private float TotalHeight {get => XUpperBound - XLowerBound;}
+    private float TotalWidth {get => YUpperBound - YLowerBound;}
+    public float XLowerBound { get => xLowerBound;}
+    public float XUpperBound { get => xUpperBound;}
+    public float YLowerBound { get => yLowerBound;}
+    public float YUpperBound { get => yUpperBound;}
+
+
     //*public methods
     public void SetPotential(Func<Vector2,float> _potential) {
         Potential = _potential;
@@ -76,7 +84,7 @@ public class MarchingSquares : MonoBehaviour
             gridWidth, 
             gridHeight, 
             resolution,
-            new Vector2(xLowerBound, yLowerBound) 
+            new Vector2(XLowerBound, YLowerBound) 
         );
         List<GridCell<bool>> boundaryPoints = new List<GridCell<bool>>();
         //TODO this could probably be replace by a function in CustomGrid that iterates an action over each index
@@ -108,7 +116,7 @@ public class MarchingSquares : MonoBehaviour
     //* Monobehavior methods
     private void Awake() {
         Mesh = GetComponent<MarchingMesh>();
-        Mesh.MarchingSquares = this;
+        Mesh.marchingSquares = this;
     }
     //? Start is called before the first frame update
     void Start()
