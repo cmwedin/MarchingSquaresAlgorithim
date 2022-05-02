@@ -10,8 +10,7 @@ public class MarchingMesh : MonoBehaviour
 {
     //* Sibling components
     public MarchingSquares marchingSquares { get; set; }
-    //* Editor Values
-    [SerializeField] bool debug;
+    //* Editor Values    
     [SerializeField] bool useVertColors;
     [SerializeField] Color canvasColor, curveColor;
     [SerializeField] float curveWidth=0.01f;

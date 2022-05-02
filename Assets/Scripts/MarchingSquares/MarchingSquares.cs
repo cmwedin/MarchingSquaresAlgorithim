@@ -11,6 +11,7 @@ public class MarchingSquares : MonoBehaviour
     private MarchingMesh Mesh;
     
     //* editor values
+    [SerializeField] PotentialSO potentialSO;
     [SerializeField] private float threshold;
     [SerializeField] private float resolution;
     [SerializeField] private float xLowerBound;
@@ -118,6 +119,9 @@ public class MarchingSquares : MonoBehaviour
     private void Awake() {
         Mesh = GetComponent<MarchingMesh>();
         Mesh.marchingSquares = this;
+        if(potentialSO != null) {
+            Potential = potentialSO.Evaluate;
+        }
     }
     //? Start is called before the first frame update
     void Start()
