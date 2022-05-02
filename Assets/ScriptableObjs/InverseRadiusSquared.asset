@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a9bf541ccc9b5845a58faef317392f3, type: 3}
   m_Name: InverseRadiusSquared
   m_EditorClassIdentifier: 
-  potential: 
+  potential: 1/(x^2+y^2)

@@ -98,6 +98,7 @@ public class MarchingSquares : MonoBehaviour
                 testingGrid.SetGridValue(index, testingValue >= threshold);
             }
         }
+        Debug.Log($"Started triangulation at {watch.ElapsedMilliseconds}ms");
         Mesh.TriangulateFromPotential(testingGrid);
         running = false;
         watch.Stop();
