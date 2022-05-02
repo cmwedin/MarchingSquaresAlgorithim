@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using SadSapphicGames.MeshUtilities;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
+
 public class MarchingMesh : MonoBehaviour
 {
     //* Sibling components
@@ -16,9 +19,18 @@ public class MarchingMesh : MonoBehaviour
     private Mesh mesh;
     private MeshRenderer meshRenderer;
     private MeshUtilityWrapper meshWrapper;
+    // * performance testing
+    private Stopwatch oneDifWatch = new Stopwatch();
+    private Stopwatch edgeWatch = new Stopwatch();
+    private Stopwatch saddleWatch = new Stopwatch();
+    private Stopwatch totalWatch = new Stopwatch();
+    private Stopwatch switchWatch = new Stopwatch();
+    private Stopwatch identificationWatch = new Stopwatch();
+    private Stopwatch evaluationWatch = new Stopwatch();
 
     //* Public Methods
     public void TriangulateFromPotential(CustomGrid<bool> potentialTests) {
+        totalWatch.Start();
         meshWrapper.ResetMesh();
         // ? draw the canvas
         meshWrapper.AddQuad(
@@ -28,20 +40,29 @@ public class MarchingMesh : MonoBehaviour
             new Vector3(marchingSquares.XUpperBound,marchingSquares.YLowerBound,1)
         );
         meshWrapper.AddQuadColor(canvasColor);
-        debugLog("Triangulating marching squares mesh");
         
         var cellList = potentialTests.GetCellList();
         foreach (var cell in cellList) {
             TriangulateCell(cell);
         }
         meshWrapper.UpdateMesh();
+        totalWatch.Stop();
+        Debug.Log($"spent {evaluationWatch.ElapsedMilliseconds}ms evaluating cells");
+        Debug.Log($"spent {identificationWatch.ElapsedMilliseconds}ms IDing cell cases");
+        Debug.Log($"spent {oneDifWatch.ElapsedMilliseconds}ms triangulating one different cells");
+        Debug.Log($"spent {edgeWatch.ElapsedMilliseconds}ms triangulating edge cells");
+        Debug.Log($"spent {saddleWatch.ElapsedMilliseconds}ms triangulating saddle cells");
+        Debug.Log($"spent {switchWatch.ElapsedMilliseconds}ms in case switch statement");
+        Debug.Log($"spent {totalWatch.ElapsedMilliseconds}ms overall triangulating mesh");
+        ResetWatches();
     }
+
+    //* Private Methods
     private void TriangulateCell(GridCell<bool> cell) {
-        debugLog($"Triangulating cell at {cell.Index}");
+        evaluationWatch.Start(); //! this is the most time consuming segment of code
         //? get the cells neighbors and make sure it isnt on the edge of the grid
         List<GridCell<bool>> neighbors = cell.GetForwardNeighbors();
         if(neighbors.Count < 3) {
-            debugLog($"cell at {cell.Index} Identified as edge");
             return;} //? because we triangulate each section from its bottom left corner we can skip the edges of the grid
         //? get the values of the cell and its neighbors
         bool[] cellValues = new bool[4];
@@ -49,18 +70,16 @@ public class MarchingMesh : MonoBehaviour
         for (int i = 1; i < 4; i++) {
             cellValues[i] = neighbors.ToArray()[i-1].GetValue();
         }
+        evaluationWatch.Stop(); //! end
         //? identify the case of the cell by converting the bool array (interpreted as a 4 dig binary number) to an int
         int caseID = IdentifyCase(cellValues);
-        debugLog($"cell at index {cell.Index} identified as case {caseID}");
         //? Triangulate the cell according to its coresponding case
-        //TODO this can probably be simplified further through symmetry 
-        switch (caseID) {
+       switchWatch.Start();
+       switch (caseID) { //? long block of code making sure the arguments of the triangulation functions are ordered correctly
             // ? all points either inside or outside the surface
             case 0: //? 0000
-                //TriangulateSimpleCase(cell, neighbors);
                 break;
             case 15: //? 1111
-                //TriangulateSimpleCase(cell, neighbors);
                 break;
             
             //? one point inside the surface
@@ -197,8 +216,10 @@ public class MarchingMesh : MonoBehaviour
                 break;
             default: throw new Exception($"unable to categorize cell at {cell.Index}, case {caseID}");
         }
+        switchWatch.Stop();
     }
     private void TriangulateOneDifferent(GridCell<bool> onCell, GridCell<bool>[] offCells) {
+        oneDifWatch.Start();
         Vector3[] interpolation = new Vector3[3];
         for (int i = 0; i < 3; i++) {
             interpolation[i] = marchingSquares.LerpCells(onCell,offCells[i]);
@@ -211,9 +232,11 @@ public class MarchingMesh : MonoBehaviour
         meshWrapper.AddQuadColor(curveColor);
         meshWrapper.AddLineSegment(interpolation[1],interpolation[2],normals[1]);
         meshWrapper.AddQuadColor(curveColor);
+        oneDifWatch.Stop();
     }
 
     private void TriangulateEdge(GridCell<bool>[] insideEdge, GridCell<bool>[] outsideEdge) {
+        edgeWatch.Start();
         Vector3[] interpolation = new Vector3[2];
         for (int i = 0; i < 2; i++) {
             interpolation[i] = marchingSquares.LerpCells(outsideEdge[i],insideEdge[i]);    
@@ -221,8 +244,12 @@ public class MarchingMesh : MonoBehaviour
         Vector3 normal = curveWidth * Vector3.Cross(interpolation[1] - interpolation[0], Vector3.back).normalized;
         meshWrapper.AddLineSegment(interpolation[0],interpolation[1],normal);
         meshWrapper.AddQuadColor(curveColor);
+        edgeWatch.Stop();
     }
+    //  TODO:
+    // ! Implement this
     private void TriangulateSaddle(GridCell<bool>[] onPoints, GridCell<bool>[] offPoints, bool centerIn) {
+        saddleWatch.Start();
         Vector3[,] interpolation = new Vector3[2,2];
         for (int i = 0; i < 2; i++) {
             interpolation[0,i] = marchingSquares.LerpCells(onPoints[0], offPoints[i]);
@@ -234,21 +261,27 @@ public class MarchingMesh : MonoBehaviour
             normals[1] = Vector3.Cross(interpolation[0,1] - interpolation[1,1], Vector3.back);
         }
 
+        saddleWatch.Stop();
         throw new NotImplementedException();
     }
 
     private int IdentifyCase(bool[] cellValues) { //? each case it represented by a binary number in which the starting cell (bottom left) is the first digit continuing clockwise
+        identificationWatch.Start();
         if(cellValues.Length != 4) throw new System.Exception("IdentifyCase requires an argument of 4 values ordered from bottom left proceding clockwise");
         BitArray binaryArg = new BitArray(cellValues);
         byte[] argBytes = new byte[1];
         binaryArg.CopyTo(argBytes,0);
+        identificationWatch.Stop();
         return argBytes[0];
     }
-
-    //* Private Methods
-    private void debugLog(string message) {
-        if(debug) Debug.Log(message);
+    private void ResetWatches() {
+        oneDifWatch.Reset();
+        edgeWatch.Reset();
+        saddleWatch.Reset();
+        totalWatch.Reset();
+        identificationWatch.Reset();
     }
+
 
     //* MonoBehaviour Methods
     void Awake() {
