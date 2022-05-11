@@ -1,2 +1,2 @@
 # MarchingSquaresAlgorithim
- A heavily WIP marching squares algorithim I've been developing, featuring and overdesigned custom grid class i plan to use as a base for my next project
+ A unity project to experiment with implimentations of marching squares algorithim. The basic algorithim is functional currently however more work needs to be done to expand its functionality  
