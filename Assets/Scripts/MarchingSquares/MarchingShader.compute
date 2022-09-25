@@ -19,4 +19,5 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     SquareStruct square = squareBuffer[id.x];
     square.squareType = square.bottomLeft*pow(2,0) + square.topLeft*pow(2,1) +square.topRight*pow(2,2) + square.bottomRight*pow(2,3);
+    squareBuffer[id.x] = square;
 }

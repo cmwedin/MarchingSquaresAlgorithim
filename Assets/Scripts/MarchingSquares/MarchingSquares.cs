@@ -112,6 +112,8 @@ public class MarchingSquares : MonoBehaviour
         caseEvaluationShader.Dispatch(0, data.Length / 10, 1, 1);
         computeBuffer.GetData(data);
         computeBuffer.Dispose();
+        int sumofallcases = (from d in data select d.squareType).Sum();
+        Debug.Log($"all identified cases sum to {sumofallcases}");
         Debug.Log($"Started triangulation at {watch.ElapsedMilliseconds}ms");
         Mesh.TriangulateFromPotential(testingGrid);
         running = false;
