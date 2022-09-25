@@ -61,7 +61,7 @@ public class GridCell<TGridObject>
     }
     
     //? returns a list of the non-null neighbors of the cell in the U UR and R directions
-    public List<GridCell<TGridObject>> GetForwardNeighbors(){
+    public List<GridCell<TGridObject>> GetForwardNeighbors(){ //! this function may be inefficiently implemented
         //Debug.Log($"getting forward neighbors of cell at {Index}");
         GridDirection direction = GridDirection.U;
         var output = new List<GridCell<TGridObject>>();

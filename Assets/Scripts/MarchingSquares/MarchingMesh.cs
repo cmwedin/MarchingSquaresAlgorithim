@@ -23,9 +23,9 @@ public class MarchingMesh : MonoBehaviour
     private Stopwatch edgeWatch = new Stopwatch();
     private Stopwatch saddleWatch = new Stopwatch();
     private Stopwatch totalWatch = new Stopwatch();
-    private Stopwatch switchWatch = new Stopwatch();
     private Stopwatch identificationWatch = new Stopwatch();
     private Stopwatch evaluationWatch = new Stopwatch();
+    private Stopwatch neighborsWatch = new Stopwatch();
 
     //* Public Methods
     public void TriangulateFromPotential(CustomGrid<bool> potentialTests) {
@@ -46,34 +46,36 @@ public class MarchingMesh : MonoBehaviour
         }
         meshWrapper.UpdateMesh();
         totalWatch.Stop();
+        Debug.Log($"spent {neighborsWatch.ElapsedMilliseconds}ms getting cell neighbors");
         Debug.Log($"spent {evaluationWatch.ElapsedMilliseconds}ms evaluating cells");
         Debug.Log($"spent {identificationWatch.ElapsedMilliseconds}ms IDing cell cases");
         Debug.Log($"spent {oneDifWatch.ElapsedMilliseconds}ms triangulating one different cells");
         Debug.Log($"spent {edgeWatch.ElapsedMilliseconds}ms triangulating edge cells");
         Debug.Log($"spent {saddleWatch.ElapsedMilliseconds}ms triangulating saddle cells");
-        Debug.Log($"spent {switchWatch.ElapsedMilliseconds}ms in case switch statement");
         Debug.Log($"spent {totalWatch.ElapsedMilliseconds}ms overall triangulating mesh");
         ResetWatches();
     }
 
     //* Private Methods
     private void TriangulateCell(GridCell<bool> cell) {
-        evaluationWatch.Start(); //! this is the most time consuming segment of code
+        neighborsWatch.Start(); //! this is the most time consuming segment of code
         //? get the cells neighbors and make sure it isnt on the edge of the grid
         List<GridCell<bool>> neighbors = cell.GetForwardNeighbors();
         if(neighbors.Count < 3) {
+            neighborsWatch.Stop();
             return;} //? because we triangulate each section from its bottom left corner we can skip the edges of the grid
+        neighborsWatch.Stop(); //! about even between the two segments
         //? get the values of the cell and its neighbors
+        evaluationWatch.Start(); //! this part takes slightly longs
         bool[] cellValues = new bool[4];
         cellValues[0] = cell.GetValue();
         for (int i = 1; i < 4; i++) {
             cellValues[i] = neighbors.ToArray()[i-1].GetValue();
         }
-        evaluationWatch.Stop(); //! end
+        evaluationWatch.Stop(); //! end of most expensive segment
         //? identify the case of the cell by converting the bool array (interpreted as a 4 dig binary number) to an int
-        int caseID = IdentifyCase(cellValues);
+        int caseID = IdentifyCase(cellValues); //! this function comes in third
         //? Triangulate the cell according to its coresponding case
-       switchWatch.Start();
        switch (caseID) { //? long block of code making sure the arguments of the triangulation functions are ordered correctly
             // ? all points either inside or outside the surface
             case 0: //? 0000
@@ -215,7 +217,6 @@ public class MarchingMesh : MonoBehaviour
                 break;
             default: throw new Exception($"unable to categorize cell at {cell.Index}, case {caseID}");
         }
-        switchWatch.Stop();
     }
     private void TriangulateOneDifferent(GridCell<bool> onCell, GridCell<bool>[] offCells) {
         oneDifWatch.Start();
