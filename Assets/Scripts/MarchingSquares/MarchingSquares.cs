@@ -108,8 +108,11 @@ public class MarchingSquares : MonoBehaviour
         int squareMemorySize = 5 *sizeof(int);
         ComputeBuffer computeBuffer = new ComputeBuffer(data.Length, squareMemorySize);
         computeBuffer.SetData(data);
-        Debug.Log($"Started triangulation at {watch.ElapsedMilliseconds}ms");
+        caseEvaluationShader.SetBuffer(0, "squareBuffer", computeBuffer);
+        caseEvaluationShader.Dispatch(0, data.Length / 10, 1, 1);
+        computeBuffer.GetData(data);
         computeBuffer.Dispose();
+        Debug.Log($"Started triangulation at {watch.ElapsedMilliseconds}ms");
         Mesh.TriangulateFromPotential(testingGrid);
         running = false;
         watch.Stop();
