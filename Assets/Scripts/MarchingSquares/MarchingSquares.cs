@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Linq;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
@@ -12,6 +14,8 @@ public class MarchingSquares : MonoBehaviour
     
     //* editor values
     [SerializeField] PotentialSO potentialSO;
+    [SerializeField] ComputeShader caseEvaluationShader;
+
     [SerializeField] private float threshold;
     [SerializeField] private float resolution;
     [SerializeField] private float xLowerBound;
@@ -67,13 +71,13 @@ public class MarchingSquares : MonoBehaviour
             Debug.LogWarning("Marching squares algorthim called while already running");
             return;
         }
-        run();
+        InnerRun();
         return;
     }
 
     //*private methods
     //? Main
-    private void run() {
+    private void InnerRun() {
         var watch = Stopwatch.StartNew(); //? for performance testing
         running = true;
         if(Potential == null) {
@@ -99,14 +103,36 @@ public class MarchingSquares : MonoBehaviour
                 testingGrid.SetGridValue(index, testingValue >= threshold);
             }
         }
+        Debug.Log($"Started grid partition  and evaluation at {watch.ElapsedMilliseconds}ms");
+        SquareStruct[] data = GenerateComputeShaderData(testingGrid);
+        int squareMemorySize = 5 *sizeof(int);
+        ComputeBuffer computeBuffer = new ComputeBuffer(data.Length, squareMemorySize);
+        computeBuffer.SetData(data);
         Debug.Log($"Started triangulation at {watch.ElapsedMilliseconds}ms");
+        computeBuffer.Dispose();
         Mesh.TriangulateFromPotential(testingGrid);
         running = false;
         watch.Stop();
-        Debug.Log($"marching squares algorithm run in {watch.ElapsedMilliseconds}ms");
+        Debug.Log($"marching squares synchronous algorithm run in {watch.ElapsedMilliseconds}ms");
         return;
     }
-
+    private SquareStruct[] GenerateComputeShaderData(CustomGrid<bool> testingGrid) {
+        int interiorCellCount = (gridHeight - 1) * (gridWidth - 1);
+        SquareStruct[] data = new SquareStruct[interiorCellCount];
+        int k = 0;
+        for (int i = 0; i < gridWidth - 1; i++) {
+            for (int j = 0; j < gridHeight - 1; j++) {
+                SquareStruct square = new SquareStruct();
+                square.bottomLeft = testingGrid.GetGridValue(new Vector2Int(i, j)) ? 1 : 0;
+                square.topLeft = testingGrid.GetGridValue(new Vector2Int(i+1, j)) ? 1 : 0;
+                square.topRight = testingGrid.GetGridValue(new Vector2Int(i+1, j+1)) ? 1 : 0;
+                square.bottomRight = testingGrid.GetGridValue(new Vector2Int(i, j+1)) ? 1 : 0;
+                data[k] = square;
+                k++;
+            }
+        }
+        return data;
+    }
     private void DrawMesh(CustomGrid<bool> testingGrid) {
         //TODO cell = testingGrid.GetCell(0,0)
         //TODO if !cell.CheckNeighbors(cell.value != neighbor.value).empty
@@ -128,7 +154,7 @@ public class MarchingSquares : MonoBehaviour
     {
         gridWidth = Mathf.FloorToInt(TotalWidth/resolution);
         gridHeight = Mathf.FloorToInt(TotalHeight/resolution);
-        run(); //! testing purposes only
+        Run(); //! testing purposes only
     }
 
     //? Update is called once per frame
