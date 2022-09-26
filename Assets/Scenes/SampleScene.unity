@@ -239,6 +239,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3957615786bed71499d84dbe80b55fc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  potentialSO: {fileID: 0}
+  caseEvaluationShader: {fileID: 7200000, guid: f067ea39150dba14cbb8f44c1e1c216b, type: 3}
   threshold: 1
   resolution: 0.01
   xLowerBound: -2
@@ -323,7 +325,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f021a05f7af9c1e49a49ec332937978e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debug: 0
   useVertColors: 1
   canvasColor: {r: 0.4449537, g: 0.763004, b: 0.9528302, a: 0}
   curveColor: {r: 1, g: 0, b: 0, a: 1}

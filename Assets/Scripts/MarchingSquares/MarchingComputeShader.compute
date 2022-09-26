@@ -6,18 +6,20 @@
 
 struct SquareStruct{
     int squareType;
-    int bottomLeft;
-    int topLeft;
-    int topRight;
-    int bottomRight;
+    float4 cornerValues;
 };
 
 RWStructuredBuffer<SquareStruct> squareBuffer;
+float threshold;
 
 [numthreads(10,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     SquareStruct square = squareBuffer[id.x];
-    square.squareType = square.bottomLeft*pow(2,0) + square.topLeft*pow(2,1) +square.topRight*pow(2,2) + square.bottomRight*pow(2,3);
+    square.squareType = 
+        (square.cornerValues[0] >= threshold)*pow(2,0) 
+        + (square.cornerValues[1] >= threshold)*pow(2,1) 
+        + (square.cornerValues[2] >= threshold)*pow(2,2) 
+        + (square.cornerValues[3] >= threshold)*pow(2,3);
     squareBuffer[id.x] = square;
 }

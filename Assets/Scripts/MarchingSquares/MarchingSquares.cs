@@ -26,9 +26,12 @@ public class MarchingSquares : MonoBehaviour
 
     //* private values
     private Func<Vector2,float> Potential;
-    private bool running = false;
     private int gridWidth, gridHeight;
-
+    // private float[,] potentialValues;
+    private Vector3 TestGridIndexToWorldPos(int i, int j) {
+        float xPos = XLowerBound + i * resolution , yPos = YLowerBound + j * resolution;
+        return new Vector3(xPos, yPos, 0);
+    }
 
     private float TotalHeight {get => XUpperBound - XLowerBound;}
     private float TotalWidth {get => YUpperBound - YLowerBound;}
@@ -64,74 +67,60 @@ public class MarchingSquares : MonoBehaviour
         float t = (threshold - value1) / (value2 - value1);
         return Vector3.Lerp(cell1.GetWorldPos(),cell2.GetWorldPos(),t);
     }
-    //? public wrapper to ensure the algorithm isn't called multiple times per instance 
-    //? probably a more elegant way to do this
-    public void Run() {
-        if(running) {
-            Debug.LogWarning("Marching squares algorthim called while already running");
-            return;
-        }
-        InnerRun();
-        return;
-    }
 
     //*private methods
     //? Main
-    private void InnerRun() {
+    public void Run() {
         var watch = Stopwatch.StartNew(); //? for performance testing
-        running = true;
         if(Potential == null) {
             Debug.LogWarning("Potential never set, using default magnitude potential");
             SetPotential(x => x.magnitude);
         }
         //? the testing grid is a grid of bools representing wether each point is >= or < the threshold value (1 and 0 respectively)
-        CustomGrid<bool> testingGrid = new CustomGrid<bool>(
-            gridWidth, 
-            gridHeight, 
-            resolution,
-            new Vector2(XLowerBound, YLowerBound) 
-        );
+        // CustomGrid<bool> testingGrid = new CustomGrid<bool>(
+        //     gridWidth, 
+        //     gridHeight, 
+        //     resolution,
+        //     new Vector2(XLowerBound, YLowerBound) 
+        // );
+        float[,] potentialValues = new float[gridWidth, gridHeight];
         List<GridCell<bool>> boundaryPoints = new List<GridCell<bool>>();
         //TODO this could probably be replace by a function in CustomGrid that iterates an action over each index
-        Vector2Int index;
-        for (int x = 0; x < gridWidth; x++) {
-            for (int y = 0; y < gridHeight; y++) {
-                index = new Vector2Int(x,y);
-                //TODO this section could would be extracted passed into CustomGrid.IterateOverIndex(SetTestingGridValue(Vector2Int index))
-                Vector2 testingPos = testingGrid.GetWorldPos(index);
-                float testingValue = Potential(testingPos);
-                testingGrid.SetGridValue(index, testingValue >= threshold);
+        for (int i = 0; i < gridWidth; i++) {
+            for (int j = 0; j < gridHeight; j++) {
+                potentialValues[i,j] = Potential(TestGridIndexToWorldPos(i,j));
             }
         }
         Debug.Log($"Started grid partition  and evaluation at {watch.ElapsedMilliseconds}ms");
-        SquareStruct[] data = GenerateComputeShaderData(testingGrid);
-        int squareMemorySize = 5 *sizeof(int);
+        SquareStruct[] data = GenerateComputeShaderData(potentialValues);
+        int squareMemorySize = 4 * sizeof(float) + sizeof(int);
         ComputeBuffer computeBuffer = new ComputeBuffer(data.Length, squareMemorySize);
         computeBuffer.SetData(data);
         caseEvaluationShader.SetBuffer(0, "squareBuffer", computeBuffer);
+        caseEvaluationShader.SetFloat("threshold", threshold);
         caseEvaluationShader.Dispatch(0, data.Length / 10, 1, 1);
         computeBuffer.GetData(data);
         computeBuffer.Dispose();
-        int sumofallcases = (from d in data select d.squareType).Sum();
-        Debug.Log($"all identified cases sum to {sumofallcases}");
-        Debug.Log($"Started triangulation at {watch.ElapsedMilliseconds}ms");
-        Mesh.TriangulateFromPotential(testingGrid);
-        running = false;
+            //? used to verify the compute shader did something
+            int sumofallcases = (from d in data select d.squareType).Sum();
+            Debug.Log($"all identified cases sum to {sumofallcases}");
+        // Debug.Log($"Started triangulation at {watch.ElapsedMilliseconds}ms");
+        // Mesh.TriangulateFromPotential(testingGrid);
         watch.Stop();
         Debug.Log($"marching squares synchronous algorithm run in {watch.ElapsedMilliseconds}ms");
         return;
     }
-    private SquareStruct[] GenerateComputeShaderData(CustomGrid<bool> testingGrid) {
+    private SquareStruct[] GenerateComputeShaderData(float[,] potentialValues) {
         int interiorCellCount = (gridHeight - 1) * (gridWidth - 1);
         SquareStruct[] data = new SquareStruct[interiorCellCount];
         int k = 0;
         for (int i = 0; i < gridWidth - 1; i++) {
             for (int j = 0; j < gridHeight - 1; j++) {
                 SquareStruct square = new SquareStruct();
-                square.bottomLeft = testingGrid.GetGridValue(new Vector2Int(i, j)) ? 1 : 0;
-                square.topLeft = testingGrid.GetGridValue(new Vector2Int(i+1, j)) ? 1 : 0;
-                square.topRight = testingGrid.GetGridValue(new Vector2Int(i+1, j+1)) ? 1 : 0;
-                square.bottomRight = testingGrid.GetGridValue(new Vector2Int(i, j+1)) ? 1 : 0;
+                square.cornerValues[0] = potentialValues[i,j];
+                square.cornerValues[1] = potentialValues[i,j+1];
+                square.cornerValues[2] = potentialValues[i+1,j+1];
+                square.cornerValues[3] = potentialValues[i+1,j];
                 data[k] = square;
                 k++;
             }
