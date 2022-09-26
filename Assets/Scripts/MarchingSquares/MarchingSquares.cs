@@ -10,7 +10,7 @@ using Debug = UnityEngine.Debug;
 public class MarchingSquares : MonoBehaviour
 {
     //* sibling components
-    private MarchingMesh Mesh;
+    private MarchingMesh marchingMesh;
     
     //* editor values
     [SerializeField] PotentialSO potentialSO;
@@ -27,7 +27,8 @@ public class MarchingSquares : MonoBehaviour
     //* private values
     private Func<Vector2,float> Potential;
     private int gridWidth, gridHeight;
-    // private float[,] potentialValues;
+    float[,] potentialValues;
+
     private Vector3 TestGridIndexToWorldPos(int i, int j) {
         float xPos = XLowerBound + i * resolution , yPos = YLowerBound + j * resolution;
         return new Vector3(xPos, yPos, 0);
@@ -83,7 +84,6 @@ public class MarchingSquares : MonoBehaviour
         //     resolution,
         //     new Vector2(XLowerBound, YLowerBound) 
         // );
-        float[,] potentialValues = new float[gridWidth, gridHeight];
         List<GridCell<bool>> boundaryPoints = new List<GridCell<bool>>();
         //TODO this could probably be replace by a function in CustomGrid that iterates an action over each index
         for (int i = 0; i < gridWidth; i++) {
@@ -92,7 +92,8 @@ public class MarchingSquares : MonoBehaviour
             }
         }
         Debug.Log($"Started grid partition  and evaluation at {watch.ElapsedMilliseconds}ms");
-        SquareStruct[] data = GenerateComputeShaderData(potentialValues);
+        marchingMesh.SetUVPotentialChanel(potentialValues);
+        SquareStruct[] data = GenerateComputeShaderData();
         int squareMemorySize = 4 * sizeof(float) + sizeof(int);
         ComputeBuffer computeBuffer = new ComputeBuffer(data.Length, squareMemorySize);
         computeBuffer.SetData(data);
@@ -110,7 +111,7 @@ public class MarchingSquares : MonoBehaviour
         Debug.Log($"marching squares synchronous algorithm run in {watch.ElapsedMilliseconds}ms");
         return;
     }
-    private SquareStruct[] GenerateComputeShaderData(float[,] potentialValues) {
+    private SquareStruct[] GenerateComputeShaderData() {
         int interiorCellCount = (gridHeight - 1) * (gridWidth - 1);
         SquareStruct[] data = new SquareStruct[interiorCellCount];
         int k = 0;
@@ -127,6 +128,7 @@ public class MarchingSquares : MonoBehaviour
         }
         return data;
     }
+
     private void DrawMesh(CustomGrid<bool> testingGrid) {
         //TODO cell = testingGrid.GetCell(0,0)
         //TODO if !cell.CheckNeighbors(cell.value != neighbor.value).empty
@@ -137,8 +139,8 @@ public class MarchingSquares : MonoBehaviour
 
     //* Monobehavior methods
     private void Awake() {
-        Mesh = GetComponent<MarchingMesh>();
-        Mesh.marchingSquares = this;
+        marchingMesh = GetComponent<MarchingMesh>();
+        marchingMesh.marchingSquares = this;
         if(potentialSO != null) {
             Potential = potentialSO.Evaluate;
         }
@@ -148,6 +150,9 @@ public class MarchingSquares : MonoBehaviour
     {
         gridWidth = Mathf.FloorToInt(TotalWidth/resolution);
         gridHeight = Mathf.FloorToInt(TotalHeight/resolution);
+        if (gridWidth == 1 || gridHeight == 1) { throw new Exception($"Must have at least 2 testing points in each dimension (current testing grid is {gridWidth} x {gridHeight})"); }
+        potentialValues = new float[gridWidth, gridHeight];
+        marchingMesh.GenerateBaseMesh(gridWidth, gridHeight);
         Run(); //! testing purposes only
     }
 
