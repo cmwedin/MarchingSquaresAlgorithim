@@ -2,7 +2,7 @@ Shader "Unlit/MarchingDrawShader"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _CurveThickness("Thickness",float) = 5
     }
     SubShader
     {
@@ -20,12 +20,14 @@ Shader "Unlit/MarchingDrawShader"
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float2 potentialValue : TEXCOORD1;
             };
 
             struct Interpolator
             {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
+                float potentialValue : TEXCOORD1;
             };
 
             sampler2D _MainTex;
@@ -35,18 +37,17 @@ Shader "Unlit/MarchingDrawShader"
             {
                 Interpolator o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
+                o.potentialValue = v.potentialValue.x;
                 return o;
             }
 
-            fixed4 frag (Interpolator i) : SV_Target
+            float4 frag (Interpolator i) : SV_Target
             {
                 // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
-                // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
+                float4 col;
+                col.xyz = i.potentialValue;
                 return col;
+                // return float4(1,0,0,1);
             }
             ENDCG
         }
