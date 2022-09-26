@@ -242,7 +242,7 @@ MonoBehaviour:
   potentialSO: {fileID: 0}
   caseEvaluationShader: {fileID: 7200000, guid: f067ea39150dba14cbb8f44c1e1c216b, type: 3}
   threshold: 1
-  resolution: 0.01
+  resolution: 0.05
   xLowerBound: -2
   xUpperBound: 2
   yLowerBound: -2
@@ -267,7 +267,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: e0831d03d42f3c845b6dfec47832ad01, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -326,6 +326,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   useVertColors: 1
+  meshWidth: 2
+  meshHeight: 2
+  anchor: {x: -1, y: -1}
   canvasColor: {r: 0.4449537, g: 0.763004, b: 0.9528302, a: 0}
   curveColor: {r: 1, g: 0, b: 0, a: 1}
   curveWidth: 0.025
