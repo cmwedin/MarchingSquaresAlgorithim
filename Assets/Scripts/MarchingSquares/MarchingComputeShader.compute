@@ -1,5 +1,5 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+#pragma kernel ClassifySquares
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
@@ -7,14 +7,18 @@
 struct SquareStruct{
     int squareType;
     float4 cornerValues;
+    float centerValue;
+    float3 bottomLeft;
+    float3 topLeft;
+    float3 topRight;
+    float3 bottomight;
 };
 
 RWStructuredBuffer<SquareStruct> squareBuffer;
 float threshold;
 
 [numthreads(10,1,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
-{
+void ClassifySquares (uint3 id : SV_DispatchThreadID) {
     SquareStruct square = squareBuffer[id.x];
     square.squareType = 
         (square.cornerValues[0] >= threshold)*pow(2,0) 
@@ -22,4 +26,12 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         + (square.cornerValues[2] >= threshold)*pow(2,2) 
         + (square.cornerValues[3] >= threshold)*pow(2,3);
     squareBuffer[id.x] = square;
+}
+
+[numthreads(10,1,1)]
+void TriangluateAboveThreshold (uint3 id : SV_DISPATCHTHREADID) {
+    switch(squareBuffer[id.x].squareType) {
+        case 0: {}
+            //? all above
+    }
 }

@@ -39,6 +39,7 @@ Shader "Unlit/MarchingDrawShader"
                 float4 vertex : SV_POSITION;
                 float potentialValue : TEXCOORD1;
                 float surfaceLevel : TEXCOORD2;
+                nointerpolation float cornerValue : TEXCOORD3;
             };
 
             sampler2D _MainTex;
@@ -50,6 +51,7 @@ Shader "Unlit/MarchingDrawShader"
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.potentialValue = v.potentialValue.x;
                 o.surfaceLevel = v.potentialValue.y;
+                o.cornerValue = v.potentialValue;
                 return o;
             }
 
@@ -76,6 +78,7 @@ Shader "Unlit/MarchingDrawShader"
                     }
                 }
                 return col;
+                // return float4(i.cornerValue,i.cornerValue,i.cornerValue,1);
             }
             ENDCG
         }

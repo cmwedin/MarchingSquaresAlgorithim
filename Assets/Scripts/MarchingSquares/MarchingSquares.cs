@@ -14,7 +14,8 @@ public class MarchingSquares : MonoBehaviour
     
     //* editor values
     [SerializeField] PotentialSO potentialSO;
-    [SerializeField] ComputeShader caseEvaluationShader;
+    [SerializeField] ComputeShader computeShader;
+    int CaseEvaluationKernel { get => computeShader.FindKernel("ClassifySquares"); }
 
     [SerializeField] private float threshold;
     [SerializeField] private float resolution;
@@ -94,12 +95,12 @@ public class MarchingSquares : MonoBehaviour
         Debug.Log($"Started grid partition  and evaluation at {watch.ElapsedMilliseconds}ms");
         marchingMesh.SetUVPotentialChanel(potentialValues,threshold);
         SquareStruct[] data = GenerateComputeShaderData();
-        int squareMemorySize = 4 * sizeof(float) + sizeof(int);
+        int squareMemorySize = 17 * sizeof(float) + sizeof(int);
         ComputeBuffer computeBuffer = new ComputeBuffer(data.Length, squareMemorySize);
         computeBuffer.SetData(data);
-        caseEvaluationShader.SetBuffer(0, "squareBuffer", computeBuffer);
-        caseEvaluationShader.SetFloat("threshold", threshold);
-        caseEvaluationShader.Dispatch(0, data.Length / 10, 1, 1);
+        computeShader.SetBuffer(0, "squareBuffer", computeBuffer);
+        computeShader.SetFloat("threshold", threshold);
+        computeShader.Dispatch(CaseEvaluationKernel, data.Length / 10, 1, 1);
         computeBuffer.GetData(data);
         computeBuffer.Dispose();
             //? used to verify the compute shader did something
@@ -119,9 +120,22 @@ public class MarchingSquares : MonoBehaviour
             for (int j = 0; j < gridHeight - 1; j++) {
                 SquareStruct square = new SquareStruct();
                 square.cornerValues[0] = potentialValues[i,j];
+                square.bottomLeft = TestGridIndexToWorldPos(i, j);
+                
                 square.cornerValues[1] = potentialValues[i,j+1];
+                square.topLeft = TestGridIndexToWorldPos(i, j+1);
+                
                 square.cornerValues[2] = potentialValues[i+1,j+1];
+                square.topRight = TestGridIndexToWorldPos(i+1, j+1);
+                
                 square.cornerValues[3] = potentialValues[i+1,j];
+                square.bottomRight = TestGridIndexToWorldPos(i+1, j);
+                
+                Vector3 centerPos = TestGridIndexToWorldPos(i, j);
+                centerPos.x += resolution / 2;
+                centerPos.y += resolution / 2;
+                square.centerValue = Potential(centerPos);
+
                 data[k] = square;
                 k++;
             }
