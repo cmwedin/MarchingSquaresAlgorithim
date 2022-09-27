@@ -15,26 +15,26 @@ public class MarchingMesh : MonoBehaviour
     [SerializeField] float meshWidth;
     [SerializeField] float meshHeight;
     [SerializeField, Tooltip("The position of the bottom left corner of the mesh")] Vector2 anchor;
-    [SerializeField] Color canvasColor, curveColor;
-    [SerializeField] float curveWidth=0.01f;
+    [SerializeField] Color aboveThresholdColor, belowThresholdColor, curveColor;
+    [SerializeField, Range(0,1)] float curveThickness=1f;
     //* Private Values
     private Mesh mesh;
     private MeshRenderer meshRenderer;
     private MeshUtilityWrapper meshWrapper;
     public void GenerateBaseMesh(int gridWidth, int gridHeight) {                        
-        mesh = new Mesh();
+        mesh = GetComponent<MeshFilter>().mesh = new Mesh();
         if (gridWidth * gridHeight > 64000) { mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32; }
-        GetComponent<MeshFilter>().mesh = mesh;
         mesh.name = "Marching Squares Mesh";
         GenerateBaseVerts(gridWidth, gridHeight);
         GenerateBaseTriangles(gridWidth, gridHeight);
     }
-    public void SetUVPotentialChanel(float[,] potentialValues) {
+    public void SetUVPotentialChanel(float[,] potentialValues, float threshold) {
         if(potentialValues.Length != mesh.vertices.Length) throw new ArgumentException("Size of potentials array does not match size of mesh");
+        meshRenderer.material.SetFloat("_Threshold", threshold);
         List<Vector2> uvs = new List<Vector2>();
         for (int i = 0; i < potentialValues.GetLength(0); i++) {
             for (int j = 0; j < potentialValues.GetLength(1); j++) {
-                Vector2 newUV = new Vector2(potentialValues[i,j],0);
+                Vector2 newUV = new Vector2(potentialValues[i,j], potentialValues[i,j] >= threshold ? 1 : 0);
                 uvs.Add(newUV);
             }
         }
@@ -71,11 +71,14 @@ public class MarchingMesh : MonoBehaviour
 
 //? MonoBehaviour Methods
     void Awake() {
+        meshRenderer = GetComponent<MeshRenderer>();
     }
     // Start is called before the first frame update
-    void Start()
-    {
-        
+    void Start() {
+        meshRenderer.material.SetFloat("_CurveThickness", curveThickness);
+        meshRenderer.material.SetColor("_CurveColor", curveColor);
+        meshRenderer.material.SetColor("_AboveThresholdColor",aboveThresholdColor);
+        meshRenderer.material.SetColor("_BelowThresholdColor",belowThresholdColor);
     }
 
     // Update is called once per frame

@@ -92,7 +92,7 @@ public class MarchingSquares : MonoBehaviour
             }
         }
         Debug.Log($"Started grid partition  and evaluation at {watch.ElapsedMilliseconds}ms");
-        marchingMesh.SetUVPotentialChanel(potentialValues);
+        marchingMesh.SetUVPotentialChanel(potentialValues,threshold);
         SquareStruct[] data = GenerateComputeShaderData();
         int squareMemorySize = 4 * sizeof(float) + sizeof(int);
         ComputeBuffer computeBuffer = new ComputeBuffer(data.Length, squareMemorySize);
